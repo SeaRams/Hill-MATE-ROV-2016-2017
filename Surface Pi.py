@@ -10,9 +10,9 @@ port = 9000 #Arbitrary port above 5000 - must be same for sub Pi
 
 #sock.connect((host, port))
 
-print "connected"
+#print "connected"
 #print(sock.recv(1024))
-##sock.send("thank you for serving")
+#sock.send("thank you for serving")
 #sock.close()
 
 
@@ -47,7 +47,8 @@ class TextPrint:
 
 pygame.init()
  
-# Set the width and height of the screen [width,height]
+# Set the width and height ofont.render(textString, True, BLACK)
+# screen.blit(textBif the screen [width,height]
 size = [500, 700]
 screen = pygame.display.set_mode(size)
 
@@ -65,6 +66,13 @@ pygame.joystick.init()
 # Get ready to print
 textPrint = TextPrint()
 
+temp = 0
+
+while done == False:
+    joystick = pygame.joystick.Joystick(0)
+    for i in range(4):
+        axis = str(joystick.get_axis(i))
+'''
 # -------- Main Program Loop -----------
 while done==False:
     # EVENT PROCESSING STEP
@@ -112,6 +120,11 @@ while done==False:
         for i in range( axes ):
             axis = joystick.get_axis( i )
             textPrint.printInfo(screen, "Axis {} value: {:>6.3f}".format(i, axis) )
+            if axis >= 0.0:
+                digit = 6
+            else:
+                digit = 7
+            print(str(axis)[0:digit])
         textPrint.unindent()
             
         buttons = joystick.get_numbuttons()
@@ -140,6 +153,8 @@ while done==False:
     # ALL CODE TO DRAW SHOULD GO ABOVE THIS COMMENT
     
     # Go ahead and update the screen with what we've drawn.
+    temp += 1
+    textPrint.printInfo(screen, str(temp))
     pygame.display.flip()
 
     # Limit to 20 frames per second
@@ -149,3 +164,4 @@ while done==False:
 # If you forget this line, the program will 'hang'
 # on exit if running from IDLE.
 pygame.quit ()
+
