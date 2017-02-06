@@ -26,6 +26,7 @@ class TextPrint:
     def unindent(self):
         self.x -= 10
 
+
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 host = '0.0.0.0'
 
@@ -46,8 +47,6 @@ screen = pygame.display.set_mode(size)
 pygame.display.set_caption("Joystick Info from: " + str(addr))
 clock = pygame.time.Clock()
 
-
-
 joystickInput = c.recv(24)
 
 while joystickInput != "END":
@@ -63,25 +62,8 @@ while joystickInput != "END":
     for i in range(4):
         textPrint.printInfo(screen,"Axis {} value: {}".format(i, joystickInput[i * 6:i * 6 + 6]))
     pygame.display.flip()
-    #clock.tick(20)
+    
 pygame.quit()
 print(c.recv(21)) #ensures that the client "closes" first, or the server port will be stuck on TIME_WAIT
 c.close()
-'''
-#Setup
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
 
-
-pygame.init()
-size = [500, 700]
-screen = pygame.display.set_mode(size)
-pygame.display.set_caption("Joystick from: " + str(addr))
-done = False 
-clock = pygame.time.Clock()
-pygame.joystick.init()
-textPrint = textPrint()
-
-while done == False:
-
-'''
