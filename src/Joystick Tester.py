@@ -1,20 +1,4 @@
-#Surface Pi is the client
-
-import socket
 import pygame
-
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-host = '169.254.122.176' #eth0 "inet addr" of Sub Pi
-port = 9000 #Arbitrary port above 5000 - must be same for sub Pi
-
-#sock.connect((host, port))
-
-#print "connected"
-#print(sock.recv(1024))
-#sock.send("thank you for serving")
-#sock.close()
-
 
 # Define some colors
 BLACK    = (   0,   0,   0)
@@ -28,7 +12,7 @@ class TextPrint:
         self.reset()
         self.font = pygame.font.Font(None, 20)
 
-    def printInfo(self, screen, textString):
+    def print1(self, screen, textString):
         textBitmap = self.font.render(textString, True, BLACK)
         screen.blit(textBitmap, [self.x, self.y])
         self.y += self.line_height
@@ -47,8 +31,7 @@ class TextPrint:
 
 pygame.init()
  
-# Set the width and height ofont.render(textString, True, BLACK)
-# screen.blit(textBif the screen [width,height]
+# Set the width and height of the screen [width,height]
 size = [500, 700]
 screen = pygame.display.set_mode(size)
 
@@ -66,13 +49,6 @@ pygame.joystick.init()
 # Get ready to print
 textPrint = TextPrint()
 
-temp = 0
-
-while done == False:
-    joystick = pygame.joystick.Joystick(0)
-    for i in range(4):
-        axis = str(joystick.get_axis(i))
-'''
 # -------- Main Program Loop -----------
 while done==False:
     # EVENT PROCESSING STEP
@@ -96,7 +72,7 @@ while done==False:
     # Get count of joysticks
     joystick_count = pygame.joystick.get_count()
 
-    textPrint.printInfo(screen, "Number of joysticks: {}".format(joystick_count) )
+    textPrint.print1(screen, "Number of joysticks: {}".format(joystick_count) )
     textPrint.indent()
     
     # For each joystick:
@@ -104,47 +80,42 @@ while done==False:
         joystick = pygame.joystick.Joystick(i)
         joystick.init()
     
-        textPrint.printInfo(screen, "Joystick {}".format(i) )
+        textPrint.print1(screen, "Joystick {}".format(i) )
         textPrint.indent()
     
         # Get the name from the OS for the controller/joystick
         name = joystick.get_name()
-        textPrint.printInfo(screen, "Joystick name: {}".format(name) )
+        textPrint.print1(screen, "Joystick name: {}".format(name) )
         
         # Usually axis run in pairs, up/down for one, and left/right for
         # the other.
         axes = joystick.get_numaxes()
-        textPrint.printInfo(screen, "Number of axes: {}".format(axes) )
+        textPrint.print1(screen, "Number of axes: {}".format(axes) )
         textPrint.indent()
         
         for i in range( axes ):
             axis = joystick.get_axis( i )
-            textPrint.printInfo(screen, "Axis {} value: {:>6.3f}".format(i, axis) )
-            if axis >= 0.0:
-                digit = 6
-            else:
-                digit = 7
-            print(str(axis)[0:digit])
+            textPrint.print1(screen, "Axis {} value: {:>6.3f}".format(i, axis) )
         textPrint.unindent()
             
         buttons = joystick.get_numbuttons()
-        textPrint.printInfo(screen, "Number of buttons: {}".format(buttons) )
+        textPrint.print1(screen, "Number of buttons: {}".format(buttons) )
         textPrint.indent()
 
         for i in range( buttons ):
             button = joystick.get_button( i )
-            textPrint.printInfo(screen, "Button {:>2} value: {}".format(i,button) )
+            textPrint.print1(screen, "Button {:>2} value: {}".format(i,button) )
         textPrint.unindent()
             
         # Hat switch. All or nothing for direction, not like joysticks.
         # Value comes back in an array.
         hats = joystick.get_numhats()
-        textPrint.printInfo(screen, "Number of hats: {}".format(hats) )
+        textPrint.print1(screen, "Number of hats: {}".format(hats) )
         textPrint.indent()
 
         for i in range( hats ):
             hat = joystick.get_hat( i )
-            textPrint.printInfo(screen, "Hat {} value: {}".format(i, str(hat)) )
+            textPrint.print1(screen, "Hat {} value: {}".format(i, str(hat)) )
         textPrint.unindent()
         
         textPrint.unindent()
@@ -153,8 +124,6 @@ while done==False:
     # ALL CODE TO DRAW SHOULD GO ABOVE THIS COMMENT
     
     # Go ahead and update the screen with what we've drawn.
-    temp += 1
-    textPrint.printInfo(screen, str(temp))
     pygame.display.flip()
 
     # Limit to 20 frames per second
@@ -164,4 +133,3 @@ while done==False:
 # If you forget this line, the program will 'hang'
 # on exit if running from IDLE.
 pygame.quit ()
-
