@@ -2,14 +2,15 @@
 
 import socket
 import pygame
+import time
 from TextPrint import TextPrint
 
-# sub = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# host = '169.254.122.176' #eth0 "inet addr" of Sub Pi
-# port = 9000 #Arbitrary port above 5000 - must be same for sub Pi
-# sub.connect((host, port))
-# print "Connected"
-# print(sub.recv(1024))
+sub = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+host = '169.254.122.176' #eth0 "inet addr" of Sub Pi
+port = 9000 #Arbitrary port above 5000 - must be same for sub Pi
+sub.connect((host, port))
+print "Connected"
+print(sub.recv(1024))
 
 pygame.init()
 joystick1 = pygame.joystick.Joystick(0) #Was in main while loop, does this work? *NOT TESTED
@@ -44,7 +45,7 @@ THRUSTER_MIN = 220
 #"Left" "Right" when looking at the ROV from behind. (Camera is "front")
 motorLeft = THRUSTER_MID
 motorRight = THRUSTER_MID
-motorFrontVertical = THRUSTER_MID
+motorBackVertical = THRUSTER_MID
 motorLeftVertical = THRUSTER_MID
 motorRightVertical = THRUSTER_MID
 
@@ -64,31 +65,32 @@ def processYaw(joystickValue):
 
 def processVertical():
     if(joystick1.get_button(6)): #button labeled "7" is pressed, ROV goes down
-        if(motorFrontVertical > THRUSTER_MIN): #because there are two back motors and one front, the back ones go half as fast as the front ones so the ROV doesn't flip.
-            motorFrontVertical = motorFrontVertical - 2
+        if(motorBackVertical > THRUSTER_MIN): #because there are two front motors and one back, the front ones go half as fast as the back one so the ROV doesn't flip.
+            motorBackVertical = motorBackVertical - 2
             motorLeftVertical = motorLeftVertical - 1
             motorRightVertical = motorRightVertical - 1
 
     elif(joystick1.get_button(7)): #button labeled "8" is pressed, ROV goes up
-        if(motorFrontVertical < THRUSTER_MAX): #because there are two back motors and one front, the back ones go half as fast as the front ones so the ROV doesn't flip.
-            motorFrontVertical = motorFrontVertical + 2
+        if(motorBackVertical < THRUSTER_MAX): #because there are two front motors and one back, the front ones go half as fast as the back one so the ROV doesn't flip.
+            motorBackVertical = motorBackVertical + 2
             motorLeftVertical = motorLeftVertical + 1
             motorRightVertical = motorRightVertical + 1
 
     else: #neither button was pressed, ROV will stop moving vertically
-        motorFrontVertical = THRUSTER_MID
+        motorBackVertical = THRUSTER_MID
         motorLeftVertical = THRUSTER_MID
         motorRightVertical = THRUSTER_MID
 
 def processJoystick():
     if(joystick1.get_button(0) == 1): #trigger button ends program
         running = False
-    processForwardBackward(joystick1.get_axis(1)) #"1" should be the forward-backwards axis. CHECK THIS
-    processYaw(joystick1.get_axis(2)) #"2" should be the twist axis. CHECK THIS
-    processVertical()
+    else:
+        processForwardBackward(joystick1.get_axis(1)) #"1" should be the forward-backwards axis. CHECK THIS
+        processYaw(joystick1.get_axis(2)) #"2" should be the twist axis. CHECK THIS
+        processVertical()
 
 def packageInformation():
-    toSend = str(motorLeft) + str(motorRight) + str(motorFrontVertical) + str(motorLeftVertical) + str(motorRightVertical)
+    toSend = str(motorLeft) + str(motorRight) + str(motorBackVertical) + str(motorLeftVertical) + str(motorRightVertical)
     return toSend
 
 while running:
@@ -99,5 +101,6 @@ while running:
         sub.send("END")
 
     time.sleep(0.05) #every 50 milliseconds
-
+    
+sub.send("Thank you for serving")
 sub.close()
