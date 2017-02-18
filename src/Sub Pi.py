@@ -1,60 +1,38 @@
 #Sub Pi is the server
 import socket
 import pygame
-
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-
-class TextPrint:
-    def __init__(self):
-        self.reset()
-        self.font = pygame.font.Font(None, 20)
-
-    def printInfo(self, screen, textString):
-        textBitmap = self.font.render(textString, True, BLACK)
-        screen.blit(textBitmap, [self.x, self.y])
-        self.y += self.line_height
-        
-    def reset(self):
-        self.x = 10
-        self.y = 10
-        self.line_height = 15
-        
-    def indent(self):
-        self.x += 10
-        
-    def unindent(self):
-        self.x -= 10
+from TextPrint import TextPrint
 
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-host = '0.0.0.0'
+def setUpSocket():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    host = '0.0.0.0'
+    port = 9000
+    sock.bind((host, port))
+    sock.listen(5)
+    print "server is ready"
+    surface, addr = sock.accept()
+    print('Got connection from', addr)
+    surface.send('Thank you for connecting')
 
-port = 9000
-sock.bind((host, port))
-sock.listen(5)
-print "server is ready"
+def setUpScreen():
+    pygame.init()
+    textPrint = TextPrint()
+    size = [500, 500]
+    screen = pygame.display.set_mode(size)
+    pygame.display.set_caption("Joystick Info from: " + str(addr))
+    clock = pygame.time.Clock()
 
-c, addr = sock.accept()
-print('Got connection from', addr)
-c.send('thank you for connecting')
+setUpSocket()
+setUpScreen()
 
-#Setup TextPrint
-pygame.init()
-textPrint = TextPrint()
-size = [500, 500]
-screen = pygame.display.set_mode(size)
-pygame.display.set_caption("Joystick Info from: " + str(addr))
-clock = pygame.time.Clock()
 
-joystickInput = c.recv(24)
-
+joystickInput = surface.recv(24)
 while joystickInput != "END":
-    screen.fill(WHITE)
     textPrint.reset()
     
     #print joystickInput
-    joystickInput = c.recv(24)
+    joystickInput = surface.recv(24)
 
     textPrint.printInfo(screen,"Joystick axis:")
     textPrint.indent()
