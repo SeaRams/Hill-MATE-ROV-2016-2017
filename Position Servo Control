@@ -1,0 +1,12 @@
+import RPi.GPIO as GPIO
+GPIO.setmode(GPIO.BOARD)
+servoPin = 1
+
+GPIO.setup(servoPIn, GPIO.OUT)
+
+angle = input("Angle for the servo: ")
+DC = (angle) * (1.0/18) + 2
+pwm.ChangeDutyCycle(DC)
+
+#The code does not currently work because we need to fine tune what are the DutyCycle for
+#0 and 180 degrees
