@@ -63,6 +63,7 @@ while joystickInput != "END":
     pwm.setPWM(10, 0, motorRightVertical)
 
     textPrint.reset()
+    screen.fill(255, 255, 255)
     textPrint.printInfo(screen,"Motor Values:")
     textPrint.indent()
     textPrint.printInfo(screen, "motorLeft value: {}".format(motorLeft))
@@ -76,5 +77,5 @@ while joystickInput != "END":
     joystickInput = surface.recv(15)
     
 pygame.quit()
-print(c.recv(21)) #ensures that the client "closes" first, or the server port will be stuck on TIME_WAIT
-c.close()
+print(surface.recv(21)) #ensures that the client "closes" first, or the server port will be stuck on TIME_WAIT
+surface.close()
