@@ -61,7 +61,9 @@ def processForwardBackward(joystickValue): #remember that moving the joystick fo
     motorRight = newValue
 
 def processYaw(joystickValue):
-    return 0;
+    #I think -1 joystick value is counterclockwise and 1 is clockwise. CHECK THIS. If not, replace left with right and right with let.
+    motorLeft = changeInterval(joystickValue, -1, 1, THRUSTER_MIN, THRUSTER_MAX)
+    motorRight = changeInterval(joystickValue, 1, -1, THRUSTER_MIN, THRUSTER_MAX)
 
 def processVertical():
     if(joystick1.get_button(6)): #button labeled "7" is pressed, ROV goes down
