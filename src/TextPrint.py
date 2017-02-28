@@ -14,7 +14,7 @@ class TextPrint:
         self.y += self.line_height
         
     def reset(self):
-        screen.fill(self.WHITE) #should this be here?
+        
         self.x = 10
         self.y = 10
         self.line_height = 15
