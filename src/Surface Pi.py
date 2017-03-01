@@ -89,18 +89,25 @@ def processYaw(joystickValue):
     # motorRight = changeInterval(joystickValue, 1, -1, THRUSTER_MIN, THRUSTER_MAX)
     #if works as intended, delete the comment.
 
+def processPitch(joystickValue):
+    global motorBackVertical, motorLeftVertical, motorRightVertical
+    newVal = joystickValue + 1. #This is the rolling joystick. All the way down turns off pitch, all the way up is both front motors going full-up and back motor going full-down
+    motorBackVertical = changeInterval(newVal, 0, 2, THRUSTER_MID, THRUSTER_MAX)
+    motorLeftVertical = changeInterval(newVal, 0, 2, THRUSTER_MID, THRUSTER_MAX) #If it doesn't work properly, flip right and left values
+    motorRightVertical = changeInterval(newVal, 2, 0, THRUSTER_MIN, THRUSTER_MID)
+
 def processVertical(joystick1):
     global motorBackVertical, motorLeftVertical, motorRightVertical
     if(joystick1.get_button(6)): #button labeled "7" is pressed, ROV goes down
         if(motorBackVertical > THRUSTER_MIN): #because there are two front motors and one back, the front ones go half as fast as the back one so the ROV doesn't flip.
             motorBackVertical = motorBackVertical - 2
-            motorLeftVertical = motorLeftVertical - 1
+            motorLeftVertical = motorLeftVertical + 1 #If not behaving correctly, flip the signs on left and right verticals. Back motors are reversed/alternated in direction
             motorRightVertical = motorRightVertical - 1
 
     elif(joystick1.get_button(7)): #button labeled "8" is pressed, ROV goes up
         if(motorBackVertical < THRUSTER_MAX): #because there are two front motors and one back, the front ones go half as fast as the back one so the ROV doesn't flip.
             motorBackVertical = motorBackVertical + 2
-            motorLeftVertical = motorLeftVertical + 1
+            motorLeftVertical = motorLeftVertical - 1 #If not behaving correctly, flip the signs on left and right verticals
             motorRightVertical = motorRightVertical + 1
 
     else: #neither button was pressed, ROV will stop moving vertically
@@ -145,6 +152,8 @@ def processJoystick():
         processForwardBackward(joystick.get_axis(1)) #"1" should be the forward-backwards axis. CHECK THIS
     elif(abs(joystick.get_axis(3)) > 0.1):
         processYaw(joystick.get_axis(3)) #"2" should be the twist axis. CHECK THIS
+    elif(joystick.get_axis(2) > -0.9):
+        processPitch(joystick.get_axis(2))
     else:
         global motorLeft, motorRight
         motorLeft = THRUSTER_MID

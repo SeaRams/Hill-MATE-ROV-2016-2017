@@ -15,4 +15,5 @@ Controlling:
 3) Hat forward/backwards = Camera up/down
 4) Hat left/right = Arm left/right
 5) Button 7/8 = Robot down/up
-6) Pressing 11 and 12 together = End programs
+6) Rolling joystick all the way down = No pitch. Slowly move it up to increase pitch.
+7) Pressing 11 and 12 together = End programs
