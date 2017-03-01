@@ -65,7 +65,7 @@ motorLeftVertical = THRUSTER_MID
 motorRightVertical = THRUSTER_MID
 camVal = CAM_MID
 armVal = ARM_MID
-clawVal = CLAW_OPEN
+clawVal = CLAW_MID
 
 
 def changeInterval(x, in_min, in_max, out_min, out_max):     #x is a value between in_min and in_max. It is "re-mapped" to between out_min and out_max.
@@ -125,10 +125,10 @@ def processHat(joystick1):
     elif(joystickHatInput == "(0, -1)"):
         if(camVal < CAM_BACKWARD):
             camVal = camVal + 5
-    elif(joystickHatInput = "(1, 0)"): #DEBUGGING: if the arm is moving left when the hat is directed right, replace (1, 0) with (-1, 0) and (-1, 0) with (1, 0).
+    elif(joystickHatInput == "(1, 0)"): #DEBUGGING: if the arm is moving left when the hat is directed right, replace (1, 0) with (-1, 0) and (-1, 0) with (1, 0).
         if(armVal < ARM_RIGHT):
             armVal = armVal + 5
-    elif(joystickHatInput = "(-1, 0)"):
+    elif(joystickHatInput == "(-1, 0)"):
         if(armVal > ARM_LEFT):
             armVal = armVal - 5
     
@@ -138,7 +138,7 @@ def processJoystick():
     joystick.init()
     for event in pygame.event.get(): # User did something
         if event.type == pygame.JOYBUTTONDOWN:
-            if(joystick.get_button(10) == 1 && joystick.getbutton(11) == 1): #press button 11 and 12 at the same time to kill
+            if(joystick.get_button(10) == 1 and joystick.get_button(11) == 1): #press button 11 and 12 at the same time to kill
                 global running
                 running = False
     if(abs(joystick.get_axis(1)) > 0.1): #has to be moved at least a little to trigger
