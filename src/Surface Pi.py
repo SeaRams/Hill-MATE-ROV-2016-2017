@@ -29,17 +29,17 @@ def usToBit(usVal):
 #Generally, mid should be usToBit(1500), +90 should be usToBit(2000) and -90 should be usToBit(1000)
 #But these servos are not accurate, so they can only be found by testing
 #Make sure to use usToBit(NUMBER) instead of just a number.
-wrist_minus = 280
-wrist_mid   = 430
-wrist_plus  = 580
-    
-claw_minus  = 200
-claw_mid    = 335
-claw_plus   = 490
+ARM_RIGHT = usToBit(2000)
+ARM_MID = usToBit(1500)
+ARM_LEFT = usToBit(1000)
 
-arm_minus   = 270
-arm_mid     = 410
-arm_plus    = 550
+CLAW_CLOSE = usToBit(1000)
+CLAW_MID = usToBit(1500)
+#CLAW_OPEN = usToBit(2000) THIS MAY NOT BE NECESSARY - we might want to Claw to be open fully at all times when it is not closed.
+#There may be a few problems:
+#1) Closing on the object may force the claw to be more open than "CLAW_CLOSE", which may strain the motor
+#2) The motor may not be strong enough, which is the problem we had last year
+#3) The screws may come loose, which was the problem last year
 
 CAM_BACKWARD = usToBit(2000)
 CAM_MID = usToBit(1500)
@@ -64,24 +64,30 @@ motorBackVertical = THRUSTER_MID
 motorLeftVertical = THRUSTER_MID
 motorRightVertical = THRUSTER_MID
 camVal = CAM_MID
+armVal = ARM_MID
+clawVal = CLAW_OPEN
 
-#Controls how much juice is going to the motors. Ranges from 0% to 100%
-throttle = 0;
 
 def changeInterval(x, in_min, in_max, out_min, out_max):     #x is a value between in_min and in_max. It is "re-mapped" to between out_min and out_max.
     return int( (x-in_min) * (out_max-out_min) // (in_max-in_min) + out_min )
 
 def processForwardBackward(joystickValue): #remember that moving the joystick forward results in a negative value.
     global motorLeft, motorRight
-    newValue = changeInterval(-joystickValue, -1, 1, THRUSTER_MIN, THRUSTER_MAX)
-    motorLeft = newValue
-    motorRight = newValue
+    motorLeft = changeInterval(-joystickValue, -1, 1, THRUSTER_MAX, THRUSTER_MIN) 
+    motorRight = changeInterval(-joystickValue, -1, 1, THRUSTER_MIN, THRUSTER_MAX)
+    #DEBUGGING: If the robot moves forward when joystick is forward, delete the above and switch to:
+    # motorLeft = changeInterval(-joystickValue, -1, 1, THRUSTER_MIN, THRUSTER_MAX) 
+    # motorRight = changeInterval(-joystickValue, -1, 1, THRUSTER_MAX, THRUSTER_MIN)
+    #Otherwise, just delete this block comment. The reason is that the motors are mis-matched to resist torque.
 
 def processYaw(joystickValue):
     global motorLeft, motorRight
-    #I think -1 joystick value is counterclockwise and 1 is clockwise. CHECK THIS. If not, replace left with right and right with let.
     motorLeft = changeInterval(joystickValue, -1, 1, THRUSTER_MIN, THRUSTER_MAX)
-    motorRight = changeInterval(joystickValue, 1, -1, THRUSTER_MIN, THRUSTER_MAX)
+    motorRight = changeInterval(joystickValue, -1, 1, THRUSTER_MIN, THRUSTER_MAX)
+    #DEBUGGING: If the robot is yawing the wrong way, switch to this code:
+    # motorLeft = changeInterval(joystickValue, 1, -1, THRUSTER_MIN, THRUSTER_MAX)
+    # motorRight = changeInterval(joystickValue, 1, -1, THRUSTER_MIN, THRUSTER_MAX)
+    #if works as intended, delete the comment.
 
 def processVertical(joystick1):
     global motorBackVertical, motorLeftVertical, motorRightVertical
@@ -102,17 +108,29 @@ def processVertical(joystick1):
         motorLeftVertical = THRUSTER_MID
         motorRightVertical = THRUSTER_MID
 
-def processCamera(joystick1):
-    global camVal
+def processClaw(joystick1): #if claw doesn't work, skype me
+    global clawVal
+    if(joystick1.get_button(0)):
+        if(clawVal > CLAW_CLOSE): #close as you hold the trigger button
+            clawVal = clawVal - 5
+    else: #go back to open if nothing is pressed
+        clawVal = CLAW_MID
+
+def processHat(joystick1):
+    global camVal, armVal, clawVal
     joystickHatInput = str(joystick1.get_hat(0))
-    #print(joystickHatInput)
     if(joystickHatInput == "(0, 1)"):
-        print("tried forward")
         if(camVal > CAM_FORWARD):
             camVal = camVal - 5
     elif(joystickHatInput == "(0, -1)"):
         if(camVal < CAM_BACKWARD):
             camVal = camVal + 5
+    elif(joystickHatInput = "(1, 0)"): #DEBUGGING: if the arm is moving left when the hat is directed right, replace (1, 0) with (-1, 0) and (-1, 0) with (1, 0).
+        if(armVal < ARM_RIGHT):
+            armVal = armVal + 5
+    elif(joystickHatInput = "(-1, 0)"):
+        if(armVal > ARM_LEFT):
+            armVal = armVal - 5
     
 
 def processJoystick():
@@ -120,7 +138,7 @@ def processJoystick():
     joystick.init()
     for event in pygame.event.get(): # User did something
         if event.type == pygame.JOYBUTTONDOWN:
-            if(joystick.get_button(0) == 1):
+            if(joystick.get_button(10) == 1 && joystick.getbutton(11) == 1): #press button 11 and 12 at the same time to kill
                 global running
                 running = False
     if(abs(joystick.get_axis(1)) > 0.1): #has to be moved at least a little to trigger
@@ -132,10 +150,11 @@ def processJoystick():
         motorLeft = THRUSTER_MID
         motorRight = THRUSTER_MID
     processVertical(joystick)
-    processCamera(joystick)
+    processHat(joystick)
+    processClaw(joystick)
         
 def packageInformation():
-    toSend = str(motorLeft) + str(motorRight) + str(motorBackVertical) + str(motorLeftVertical) + str(motorRightVertical) + str(camVal)
+    toSend = str(motorLeft) + str(motorRight) + str(motorBackVertical) + str(motorLeftVertical) + str(motorRightVertical) + str(camVal) + str(armVal) + str(clawVal)
     return toSend
 
 while running == True:
@@ -145,7 +164,7 @@ while running == True:
         sub.send(temp)
         sub.recv(12)
     else:
-        sub.send("ENDENDENDENDENDEND")
+        sub.send("ENDENDENDENDENDENDENDEND")
 
 pygame.quit()
 sub.send("Thank you for serving")
