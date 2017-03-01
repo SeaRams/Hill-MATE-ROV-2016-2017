@@ -2,90 +2,152 @@
 
 import socket
 import pygame
-
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-host = '169.254.122.176' #eth0 "inet addr" of Sub Pi
+import time
+from TextPrint import TextPrint
+   
+sub = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+host = '169.254.209.5' #eth0 "inet addr" of Sub Pi
 port = 9000 #Arbitrary port above 5000 - must be same for sub Pi
-
-sock.connect((host, port))
-
-print "connected"
-print(sock.recv(1024))
-
-#sock.send("thank you for serving")
-sock.close()
-
-# Define some colors
-BLACK    = (   0,   0,   0)
-WHITE    = ( 255, 255, 255)
-
-# This is a simple class that will help us print to the screen
-# It has nothing to do with the joysticks, just outputing the
-# information.
-class TextPrint:
-    def __init__(self):
-        self.reset()
-        self.font = pygame.font.Font(None, 20)
-
-    def printInfo(self, screen, textString):
-        textBitmap = self.font.render(textString, True, BLACK)
-        screen.blit(textBitmap, [self.x, self.y])
-        self.y += self.line_height
-        
-    def reset(self):
-        self.x = 10
-        self.y = 10
-        self.line_height = 15
-        
-    def indent(self):
-        self.x += 10
-        
-    def unindent(self):
-        self.x -= 10
-    
+sub.connect((host, port))
+print "Connected"
+print(sub.recv(1024))
 
 pygame.init()
- 
-# Set the width and height ofont.render(textString, True, BLACK)
-# screen.blit(textBif the screen [width,height]
-#size = [500, 700]
-#screen = pygame.display.set_mode(size)
-
-#pygame.display.set_caption("My Game")
-
-#Loop until the user clicks the close button.
-done = False
-
-# Used to manage how fast the screen updates
+pygame.joystick.init()
 clock = pygame.time.Clock()
+running = True
 
-# Initialize the joysticks
+cycle = 60 #Current cycle for the motors. If slow response time, raise.
 
+def usToBit(usVal):
+    tick = (1000000 / cycle) / 4096
+    return usVal / tick
+
+#IMPORTANT: THESE ARE VALUES FROM LAST YEAR, HAVE NOT BEEN CONFIRMED, DO NOT USE WITHOUT TESTING
+#Servo default pulse lengths.
+
+#Generally, mid should be usToBit(1500), +90 should be usToBit(2000) and -90 should be usToBit(1000)
+#But these servos are not accurate, so they can only be found by testing
+#Make sure to use usToBit(NUMBER) instead of just a number.
+wrist_minus = 280
+wrist_mid   = 430
+wrist_plus  = 580
     
-# Get ready to print
-#textPrint = TextPrint()
+claw_minus  = 200
+claw_mid    = 335
+claw_plus   = 490
 
-#temp = 0
+arm_minus   = 270
+arm_mid     = 410
+arm_plus    = 550
 
-while done == False:
-    joystick1 = pygame.joystick.Joystick(0)
-    joystick1.init()
+CAM_BACKWARD = usToBit(2000)
+CAM_MID = usToBit(1500)
+CAM_FORWARD = usToBit(1000)
+
+#Constant thruster pulse lengths.
+THRUSTER_MAX = usToBit(1900) #1900 us is full forward, raise if not fast enough.
+THRUSTER_MID = usToBit(1500)
+THRUSTER_MIN = usToBit(1100)
+'''
+Old values
+THRUSTER_MAX = 600 
+THRUSTER_MID = 410
+THRUSTER_MIN = 220
+'''
+
+#Active values. Only thrusters for now. TO CHANGE WHEN ARM GETS MADE
+#"Left" "Right" when looking at the ROV from behind. (Camera is "front")
+motorLeft = THRUSTER_MID
+motorRight = THRUSTER_MID
+motorBackVertical = THRUSTER_MID
+motorLeftVertical = THRUSTER_MID
+motorRightVertical = THRUSTER_MID
+camVal = CAM_MID
+
+#Controls how much juice is going to the motors. Ranges from 0% to 100%
+throttle = 0;
+
+def changeInterval(x, in_min, in_max, out_min, out_max):     #x is a value between in_min and in_max. It is "re-mapped" to between out_min and out_max.
+    return int( (x-in_min) * (out_max-out_min) // (in_max-in_min) + out_min )
+
+def processForwardBackward(joystickValue): #remember that moving the joystick forward results in a negative value.
+    global motorLeft, motorRight
+    newValue = changeInterval(-joystickValue, -1, 1, THRUSTER_MIN, THRUSTER_MAX)
+    motorLeft = newValue
+    motorRight = newValue
+
+def processYaw(joystickValue):
+    global motorLeft, motorRight
+    #I think -1 joystick value is counterclockwise and 1 is clockwise. CHECK THIS. If not, replace left with right and right with let.
+    motorLeft = changeInterval(joystickValue, -1, 1, THRUSTER_MIN, THRUSTER_MAX)
+    motorRight = changeInterval(joystickValue, 1, -1, THRUSTER_MIN, THRUSTER_MAX)
+
+def processVertical(joystick1):
+    global motorBackVertical, motorLeftVertical, motorRightVertical
+    if(joystick1.get_button(6)): #button labeled "7" is pressed, ROV goes down
+        if(motorBackVertical > THRUSTER_MIN): #because there are two front motors and one back, the front ones go half as fast as the back one so the ROV doesn't flip.
+            motorBackVertical = motorBackVertical - 2
+            motorLeftVertical = motorLeftVertical - 1
+            motorRightVertical = motorRightVertical - 1
+
+    elif(joystick1.get_button(7)): #button labeled "8" is pressed, ROV goes up
+        if(motorBackVertical < THRUSTER_MAX): #because there are two front motors and one back, the front ones go half as fast as the back one so the ROV doesn't flip.
+            motorBackVertical = motorBackVertical + 2
+            motorLeftVertical = motorLeftVertical + 1
+            motorRightVertical = motorRightVertical + 1
+
+    else: #neither button was pressed, ROV will stop moving vertically
+        motorBackVertical = THRUSTER_MID
+        motorLeftVertical = THRUSTER_MID
+        motorRightVertical = THRUSTER_MID
+
+def processCamera(joystick1):
+    global camVal
+    joystickHatInput = str(joystick1.get_hat(0))
+    #print(joystickHatInput)
+    if(joystickHatInput == "(0, 1)"):
+        print("tried forward")
+        if(camVal > CAM_FORWARD):
+            camVal = camVal - 5
+    elif(joystickHatInput == "(0, -1)"):
+        if(camVal < CAM_BACKWARD):
+            camVal = camVal + 5
     
-    for event in pygame.event.get():
-        if event.type == pygame.JOYBUTTONDOWN and (joystick1.get_button(11) == 1 or joystick1.get_button(10) == 1):
-            sock.send("END")
-            done = True;
-    
-    toSend = ""
-    for i in range(0, 4):
-        axis = str(joystick1.get_axis(i))
-        toSend += str(axis)[0:6]
-        for j in range(0, 6 - len(str(axis))):
-            toSend += "0" #just in case "axis" is 1.0 or too short
-    #print toSend
-    sock.send(toSend)
-    clock.tick(20)
 
-sock.send("thank you for serving")
-sock.close()
+def processJoystick():
+    joystick = pygame.joystick.Joystick(0) #Was in main while loop, does this work? *NOT TESTED
+    joystick.init()
+    for event in pygame.event.get(): # User did something
+        if event.type == pygame.JOYBUTTONDOWN:
+            if(joystick.get_button(0) == 1):
+                global running
+                running = False
+    if(abs(joystick.get_axis(1)) > 0.1): #has to be moved at least a little to trigger
+        processForwardBackward(joystick.get_axis(1)) #"1" should be the forward-backwards axis. CHECK THIS
+    elif(abs(joystick.get_axis(2)) > 0.1):
+        processYaw(joystick.get_axis(2)) #"2" should be the twist axis. CHECK THIS
+    else:
+        global motorLeft, motorRight
+        motorLeft = THRUSTER_MID
+        motorRight = THRUSTER_MID
+    processVertical(joystick)
+    processCamera(joystick)
+        
+def packageInformation():
+    toSend = str(motorLeft) + str(motorRight) + str(motorBackVertical) + str(motorLeftVertical) + str(motorRightVertical) + str(camVal)
+    return toSend
+
+while running == True:
+    processJoystick()
+    if(running):
+        temp = packageInformation()
+        sub.send(temp)
+        sub.recv(12)
+    else:
+        sub.send("ENDENDENDENDENDEND")
+
+pygame.quit()
+sub.send("Thank you for serving")
+sub.close()
+#Surface Pi is the client
