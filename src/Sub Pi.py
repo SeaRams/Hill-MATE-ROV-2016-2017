@@ -26,15 +26,20 @@ pygame.display.set_caption("Joystick Info from: " + str(addr))
 clock = pygame.time.Clock()
 
 # Initialise the PWM device using the default address
+cycle = 60
 pwm = PWM(0x40)
-pwm.setPWMFreq(60)
+pwm.setPWMFreq(cycle)
+
+def usToBit(usVal):
+    tick = (1000000 / cycle) / 4096
+    return usVal/tick
 
 #IMPORTANT: THESE ARE VALUES FROM LAST YEAR, HAVE NOT BEEN CONFIRMED, DO NOT USE WITHOUT TESTING
 #Servo default pulse lengths. 
 wrist_mid   = 430
 claw_mid    = 335
 arm_mid     = 410
-cam_mid   = 365
+CAM_MID   = usToBit(1500)
 
 #Constant thruster pulse lengths. 
 THRUSTER_MID = 410
@@ -46,24 +51,28 @@ motorRight = THRUSTER_MID
 motorBackVertical = THRUSTER_MID
 motorLeftVertical = THRUSTER_MID
 motorRightVertical = THRUSTER_MID
+camVal = CAM_MID
 
-
-joystickInput = surface.recv(15)
-while joystickInput != "END":
+counter = 1
+joystickInput = surface.recv(18)
+while joystickInput != "ENDENDENDENDENDEND":
+    #print(joystickInput)
     motorLeft = joystickInput[0:3]
     motorRight = joystickInput[3:6]
     motorBackVertical = joystickInput[6:9]
     motorLeftVertical = joystickInput[9:12]
     motorRightVertical = joystickInput[12:15]
-
-    pwm.setPWM(4, 0, motorLeft)
-    pwm.setPWM(5, 0, motorRight)
-    pwm.setPWM(8, 0, motorBackVertical)
-    pwm.setPWM(9, 0, motorLeftVertical)
-    pwm.setPWM(10, 0, motorRightVertical)
-
+    camVal = joystickInput[15:18]
+    
+    pwm.setPWM(4, 0, int(motorLeft))
+    pwm.setPWM(5, 0, int(motorRight))
+    pwm.setPWM(8, 0, int(motorBackVertical))
+    pwm.setPWM(9, 0, int(motorLeftVertical))
+    pwm.setPWM(10, 0, int(motorRightVertical))
+    pwm.setPWM(0, 0, int(camVal))
+    
     textPrint.reset()
-    screen.fill(255, 255, 255)
+    screen.fill(( 255, 255, 255))
     textPrint.printInfo(screen,"Motor Values:")
     textPrint.indent()
     textPrint.printInfo(screen, "motorLeft value: {}".format(motorLeft))
@@ -71,10 +80,13 @@ while joystickInput != "END":
     textPrint.printInfo(screen, "motorbackVertical value: {}".format(motorBackVertical))
     textPrint.printInfo(screen, "motorLeftVertical value: {}".format(motorLeftVertical))
     textPrint.printInfo(screen, "motorRightVertical value: {}".format(motorRightVertical))
+    textPrint.printInfo(screen, "camVal value: {}".format(camVal))
+    counter+=1
+    textPrint.printInfo(screen, str(counter))
     pygame.display.flip()
+    surface.send("Confirmation")
 
-    time.sleep(0.05)
-    joystickInput = surface.recv(15)
+    joystickInput = surface.recv(18)
     
 pygame.quit()
 print(surface.recv(21)) #ensures that the client "closes" first, or the server port will be stuck on TIME_WAIT
