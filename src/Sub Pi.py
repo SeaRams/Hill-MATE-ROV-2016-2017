@@ -26,7 +26,7 @@ pygame.display.set_caption("Joystick Info from: " + str(addr))
 clock = pygame.time.Clock()
 
 # Initialise the PWM device using the default address
-cycle = 60
+cycle = 60 #cycle value. servos are best at 60, but motors are best at something hundreds. 60 was the value from last year
 pwm = PWM(0x40)
 pwm.setPWMFreq(cycle)
 
@@ -34,28 +34,20 @@ def usToBit(usVal):
     tick = (1000000 / cycle) / 4096
     return usVal/tick
 
-#IMPORTANT: THESE ARE VALUES FROM LAST YEAR, HAVE NOT BEEN CONFIRMED, DO NOT USE WITHOUT TESTING
-#Servo default pulse lengths. 
-wrist_mid   = 430
-claw_mid    = 335
-arm_mid     = 410
-CAM_MID   = usToBit(1500)
-
-#Constant thruster pulse lengths. 
-THRUSTER_MID = 410
-
 #Active values. Only thrusters for now. TO CHANGE WHEN ARM GETS MADE
 #"Left" "Right" when looking at the ROV from behind. (Camera is "front")
-motorLeft = THRUSTER_MID
-motorRight = THRUSTER_MID
-motorBackVertical = THRUSTER_MID
-motorLeftVertical = THRUSTER_MID
-motorRightVertical = THRUSTER_MID
-camVal = CAM_MID
+motorLeft = 0
+motorRight = 0
+motorBackVertical = 0
+motorLeftVertical = 0
+motorRightVertical = 0
+camVal = 0
+armVal = 0
+clawVal = 0
 
 counter = 1
-joystickInput = surface.recv(18)
-while joystickInput != "ENDENDENDENDENDEND":
+joystickInput = surface.recv(24)
+while joystickInput != "ENDENDENDENDENDENDENDEND":
     #print(joystickInput)
     motorLeft = joystickInput[0:3]
     motorRight = joystickInput[3:6]
@@ -63,6 +55,8 @@ while joystickInput != "ENDENDENDENDENDEND":
     motorLeftVertical = joystickInput[9:12]
     motorRightVertical = joystickInput[12:15]
     camVal = joystickInput[15:18]
+    armVal = joystickInput[18:21]
+    clawVal = joystickInput[21:24]
     
     pwm.setPWM(4, 0, int(motorLeft))
     pwm.setPWM(5, 0, int(motorRight))
@@ -70,6 +64,8 @@ while joystickInput != "ENDENDENDENDENDEND":
     pwm.setPWM(9, 0, int(motorLeftVertical))
     pwm.setPWM(10, 0, int(motorRightVertical))
     pwm.setPWM(0, 0, int(camVal))
+    pwm.setPWM(1, 0, int(armVal)) #DEBUGGING: port 1 is arm movement, port 2 is claw open/close
+    pwm.setPWM(2, 0, int(clawVal))
     
     textPrint.reset()
     screen.fill(( 255, 255, 255))
@@ -81,12 +77,14 @@ while joystickInput != "ENDENDENDENDENDEND":
     textPrint.printInfo(screen, "motorLeftVertical value: {}".format(motorLeftVertical))
     textPrint.printInfo(screen, "motorRightVertical value: {}".format(motorRightVertical))
     textPrint.printInfo(screen, "camVal value: {}".format(camVal))
+    textPrint.printInfo(screen, "armVal value: {}".format(armVal))
+    textPrint.printInfo(screen, "clawVal value: {}".format(clawVal))
     counter+=1
-    textPrint.printInfo(screen, str(counter))
+    textPrint.printInfo(screen, str(counter)) #tick rate
     pygame.display.flip()
     surface.send("Confirmation")
 
-    joystickInput = surface.recv(18)
+    joystickInput = surface.recv(24)
     
 pygame.quit()
 print(surface.recv(21)) #ensures that the client "closes" first, or the server port will be stuck on TIME_WAIT
