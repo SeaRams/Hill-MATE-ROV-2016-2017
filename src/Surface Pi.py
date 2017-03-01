@@ -143,8 +143,8 @@ def processJoystick():
                 running = False
     if(abs(joystick.get_axis(1)) > 0.1): #has to be moved at least a little to trigger
         processForwardBackward(joystick.get_axis(1)) #"1" should be the forward-backwards axis. CHECK THIS
-    elif(abs(joystick.get_axis(2)) > 0.1):
-        processYaw(joystick.get_axis(2)) #"2" should be the twist axis. CHECK THIS
+    elif(abs(joystick.get_axis(3)) > 0.1):
+        processYaw(joystick.get_axis(3)) #"2" should be the twist axis. CHECK THIS
     else:
         global motorLeft, motorRight
         motorLeft = THRUSTER_MID
