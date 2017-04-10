@@ -113,8 +113,9 @@ def processClaw(joystick1): #if claw doesn't work, skype me
     if(joystick1.get_button(0)):
         if(clawVal > CLAW_CLOSE): #close as you hold the trigger button
             clawVal = clawVal - 5
-    else: #go back to open if nothing is pressed
-        clawVal = CLAW_MID
+    elif(joystick1.get_button(1)):
+        if(clawVal < CLAW_MID):
+            clawVal = clawVal + 5
 
 def processHat(joystick1):
     global camVal, armVal, clawVal
@@ -125,12 +126,14 @@ def processHat(joystick1):
     elif(joystickHatInput == "(0, -1)"):
         if(camVal < CAM_BACKWARD):
             camVal = camVal + 5
+    '''
     elif(joystickHatInput == "(1, 0)"): #DEBUGGING: if the arm is moving left when the hat is directed right, replace (1, 0) with (-1, 0) and (-1, 0) with (1, 0).
         if(armVal < ARM_RIGHT):
             armVal = armVal + 5
     elif(joystickHatInput == "(-1, 0)"):
         if(armVal > ARM_LEFT):
             armVal = armVal - 5
+    '''
     
 
 def processJoystick():
@@ -167,7 +170,7 @@ def limitAmps(): #max draw for motors is 15 amps, 2.5 amps for servos. Playing i
         motorLeftVertical = int(((motorLeftVertical - THRUSTER_MID) * 1.0 / sumOfDiff) * maximum + THRUSTER_MID)
         
 def packageInformation():
-    toSend = str(motorLeft) + str(motorRight) + str(motorBackVertical) + str(motorLeftVertical) + str(motorRightVertical) + str(camVal) + str(armVal) + str(clawVal)
+    toSend = str(motorLeft) + str(motorRight) + str(motorBackVertical) + str(motorLeftVertical) + str(motorRightVertical) + str(camVal) + str(clawVal)
     return toSend
 
 while running == True:
@@ -177,7 +180,7 @@ while running == True:
         sub.send(temp)
         sub.recv(12)
     else:
-        sub.send("ENDENDENDENDENDENDENDEND")
+        sub.send("ENDENDENDENDENDENDEND")
 
 pygame.quit()
 sub.send("Thank you for serving")
