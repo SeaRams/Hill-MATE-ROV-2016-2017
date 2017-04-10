@@ -152,6 +152,19 @@ def processJoystick():
     processVertical(joystick)
     processHat(joystick)
     processClaw(joystick)
+    limitAmps()
+
+def limitAmps(): #max draw for motors is 15 amps, 2.5 amps for servos. Playing it safe. We're giving all the servos 5 amps to play.
+    global motorLeft, motorRight, motorBackVertical, motorRightVertical, motorLeftVertical, camVal, armVal, clawVal
+    totalAmps = 20;
+    maximum = int(((THRUSTER_MAX - THRUSTER_MID) / 15.0) * totalAmps)
+    sumOfDiff = (abs(motorLeft - THRUSTER_MID) + abs(motorRight - THRUSTER_MID) + abs(motorBackVertical - THRUSTER_MID) + abs(motorRightVertical - THRUSTER_MID) + abs(motorLeftVertical - THRUSTER_MID))
+    if(sumOfDiff > maximum): #only limit if going over
+        motorLeft = int(((motorLeft - THRUSTER_MID) * 1.0 / sumOfDiff) * maximum + THRUSTER_MID)
+        motorRight = int(((motorRight - THRUSTER_MID) * 1.0 / sumOfDiff) * maximum + THRUSTER_MID)
+        motorBackVertical = int(((motorBackVertical - THRUSTER_MID) * 1.0 / sumOfDiff) * maximum + THRUSTER_MID)
+        motorRightVertical = int(((motorRightVertical - THRUSTER_MID) * 1.0 / sumOfDiff) * maximum + THRUSTER_MID)
+        motorLeftVertical = int(((motorLeftVertical - THRUSTER_MID) * 1.0 / sumOfDiff) * maximum + THRUSTER_MID)
         
 def packageInformation():
     toSend = str(motorLeft) + str(motorRight) + str(motorBackVertical) + str(motorLeftVertical) + str(motorRightVertical) + str(camVal) + str(armVal) + str(clawVal)
