@@ -42,12 +42,11 @@ motorBackVertical = 0
 motorLeftVertical = 0
 motorRightVertical = 0
 camVal = 0
-armVal = 0
 clawVal = 0
 
 counter = 1
 joystickInput = surface.recv(24)
-while joystickInput != "ENDENDENDENDENDENDENDEND":
+while joystickInput != "ENDENDENDENDENDENDEND":
     #print(joystickInput)
     motorLeft = joystickInput[0:3]
     motorRight = joystickInput[3:6]
@@ -55,16 +54,14 @@ while joystickInput != "ENDENDENDENDENDENDENDEND":
     motorLeftVertical = joystickInput[9:12]
     motorRightVertical = joystickInput[12:15]
     camVal = joystickInput[15:18]
-    armVal = joystickInput[18:21]
-    clawVal = joystickInput[21:24]
+    clawVal = joystickInput[18:21]
     
     pwm.setPWM(4, 0, int(motorLeft))
     pwm.setPWM(5, 0, int(motorRight))
     pwm.setPWM(8, 0, int(motorBackVertical))
     pwm.setPWM(9, 0, int(motorLeftVertical))
     pwm.setPWM(10, 0, int(motorRightVertical))
-    pwm.setPWM(0, 0, int(camVal))
-    pwm.setPWM(1, 0, int(armVal)) #DEBUGGING: port 1 is arm movement, port 2 is claw open/close
+    pwm.setPWM(0, 0, int(camVal)) #DEBUGGING: port 1 is arm movement, port 2 is claw open/close
     pwm.setPWM(2, 0, int(clawVal))
     
     textPrint.reset()
@@ -77,14 +74,13 @@ while joystickInput != "ENDENDENDENDENDENDENDEND":
     textPrint.printInfo(screen, "motorLeftVertical value: {}".format(motorLeftVertical))
     textPrint.printInfo(screen, "motorRightVertical value: {}".format(motorRightVertical))
     textPrint.printInfo(screen, "camVal value: {}".format(camVal))
-    textPrint.printInfo(screen, "armVal value: {}".format(armVal))
     textPrint.printInfo(screen, "clawVal value: {}".format(clawVal))
     counter+=1
     textPrint.printInfo(screen, str(counter)) #tick rate
     pygame.display.flip()
     surface.send("Confirmation")
 
-    joystickInput = surface.recv(24)
+    joystickInput = surface.recv(21)
     
 pygame.quit()
 print(surface.recv(21)) #ensures that the client "closes" first, or the server port will be stuck on TIME_WAIT
